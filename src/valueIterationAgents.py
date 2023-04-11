@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -12,8 +12,10 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-import mdp, util
+import mdp
+import util
 from learningAgents import ValueEstimationAgent
+
 
 class ValueIterationAgent(ValueEstimationAgent):
     """
@@ -24,6 +26,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         for a given number of iterations using the supplied
         discount factor.
     """
+
     def __init__(self, mdp, discount=0.9, iterations=100):
         """
           Your value iteration agent should take an mdp on
@@ -43,8 +46,24 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.values = util.Counter()  # A Counter is a dict with default 0
 
         # Write value iteration code here
-        "*** YOUR CODE HERE ***"
+        states = mdp.getStates()
+        for i in range(iterations):
+            newValues = self.values.copy()
+            for state in states:
+                if mdp.isTerminal(state):
+                    newValues[state] = 0
+                    continue
+                actions = mdp.getPossibleActions(state)
 
+                qValues = []
+                for action in actions:
+                    qValues.append(self.computeQValueFromValues(state, action))
+
+                if len(qValues) > 0:
+                    newValues[state] = max(qValues)
+                else:
+                    newValues[state] = 0
+            self.values = newValues
 
     def getValue(self, state):
         """
@@ -57,8 +76,12 @@ class ValueIterationAgent(ValueEstimationAgent):
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        qValue = 0
+        statesAndProbs = self.mdp.getTransitionStatesAndProbs(state, action)
+        for nextState, prob in statesAndProbs:
+            qValue += prob * (self.mdp.getReward(state, action,
+                              nextState) + self.discount * self.values[nextState])
+        return qValue
 
     def computeActionFromValues(self, state):
         """
@@ -69,8 +92,19 @@ class ValueIterationAgent(ValueEstimationAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if self.mdp.isTerminal(state):
+            return None
+        actions = self.mdp.getPossibleActions(state)
+
+        if not actions:
+            return None
+
+        qValues = []
+        for action in actions:
+            qValues.append(
+                (self.computeQValueFromValues(state, action), action))
+
+        return max(qValues)[1]
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
